@@ -4,9 +4,10 @@
 , lib
 , makeWrapper
 , runCommand
+, krew-index
 }:
 
-let krewPlugins = callPackage ./krew-plugins.nix { };
+let krewPlugins = callPackage ./krew-plugins.nix { inherit krew-index; };
 in
 kubectl.overrideAttrs (_: {
   passthru.withKrewPlugins = selectPlugins:

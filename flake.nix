@@ -11,7 +11,7 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         krewPlugins = pkgs.callPackage ./krew-plugins.nix { inherit krew-index; };
-        kubectl = pkgs.callPackage ./kubectl.nix { };
+        kubectl = pkgs.callPackage ./kubectl.nix { inherit krew-index; };
       in
       { packages = krewPlugins // { inherit kubectl; }; });
 }
