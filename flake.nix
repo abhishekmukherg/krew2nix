@@ -10,8 +10,8 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        krewPlugins = pkgs.callPackage ./krew-plugins.nix { };
+        krewPlugins = pkgs.callPackage ./krew-plugins.nix { inherit krew-index; };
         kubectl = pkgs.callPackage ./kubectl.nix { };
       in
-      { packages = krewPlugins // { inherit kubectl krew-index; }; });
+      { packages = krewPlugins // { inherit kubectl; }; });
 }
