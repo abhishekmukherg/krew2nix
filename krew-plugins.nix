@@ -19,10 +19,14 @@ let
   inherit (lib)
     head nameValuePair assertMsg filesystem id listToAttrs concatStringsSep
     licenses;
+  jsonFilenameFromYaml = yamlFile: let
+    basename = lib.lists.last ( lib.strings.splitString "/" yamlFile );
+  in "${lib.strings.removeSuffix ".yaml" basename}.json";
   pluginDerivations = listToAttrs (map
     (yamlFile:
+
       let
-        pluginDefinition = readYaml yamlFile;
+        pluginDefinition = builtins.fromJSON(builtins.readFile "${krewIndexAsJson}/plugins/${jsonFilenameFromYaml yamlFile}");
         pluginName = pluginDefinition.metadata.name;
       in
       nameValuePair pluginName (mkPlugin pluginDefinition))
@@ -76,6 +80,12 @@ let
             [ ];
       };
     };
+  krewIndexAsJson = buildPackages.runCommandLocal "read-yaml" {} ''
+    mkdir -p $out/plugins
+    for file in ${krew-index}/plugins/*.yaml; do
+      ${buildPackages.remarshal}/bin/remarshal -if yaml -i $file -of json -o $out/plugins/$(basename $file .yaml).json
+    done
+  '';
   allPluginDefinitions = filesystem.listFilesRecursive "${krew-index}/plugins";
   # Krew is using Golang terminology when listing plugin artifacts by platform.
   targetOs = go.GOOS;
@@ -106,15 +116,5 @@ let
         == targetArch;
     in
     matchesOs && matchesArch;
-  readYaml = yamlFile:
-    let
-      jsonFile = buildPackages.runCommand "read-yaml"
-        {
-          allowSubstitutes = false;
-          preferLocalBuild = true;
-        }
-        "${buildPackages.remarshal}/bin/remarshal -if yaml -i ${yamlFile} -of json -o $out";
-    in
-    builtins.fromJSON (builtins.readFile jsonFile);
 in
 pluginDerivations
